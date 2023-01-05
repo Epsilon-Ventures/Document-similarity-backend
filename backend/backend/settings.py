@@ -116,6 +116,7 @@ USE_I18N = True
 USE_TZ = True
 
 CORS_ORIGIN_ALLOW_ALL = True
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000/']
 
 
 # Static files (CSS, JavaScript, Images)
