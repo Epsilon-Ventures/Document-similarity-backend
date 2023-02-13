@@ -53,9 +53,9 @@ def getSecondModel(req):
             "inputs": {
                 "source_sentence": data["text"],
                 "sentences": [
-                    "That is a happy dog",
-                    "That is a very happy person",
-                    "Today is a sunny day"
+                    "I am running a company",
+                    "I am run everyday in the morning",
+                    "He runs my company"
                 ]
             },
         }
