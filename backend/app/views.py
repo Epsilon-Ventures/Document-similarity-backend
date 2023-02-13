@@ -53,8 +53,8 @@ def getSecondModel(req):
             "inputs": {
                 "source_sentence": data["text"],
                 "sentences": [
-                    "I am running a company",
-                    "I am run everyday in the morning",
+                    "Random guy am running a company",
+                    "I run everyday in the morning",
                     "He runs my company"
                 ]
             },
