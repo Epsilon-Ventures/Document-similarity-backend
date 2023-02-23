@@ -53,7 +53,5 @@ def model_request(req):
         )
 
         response_final = similarity_score_calculator(res,model,embeddings)
-
-        print(response_final)
         return JsonResponse(response_final, safe = False)
 
