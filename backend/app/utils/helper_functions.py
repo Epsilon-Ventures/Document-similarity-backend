@@ -27,7 +27,7 @@ def similarity_score_calculator(questions, model,query_encode):
                 ques_sim_score_list.append({
                         "question":question["question1"],
                         "sim_score":round(score[0],2),
-                        "id":question["id"]
+                        "id":str(question["id"])
                 })
             
         return ques_sim_score_list
