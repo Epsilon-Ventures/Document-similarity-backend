@@ -9,6 +9,7 @@ djangorestframework==3.14.0
 filelock==3.9.0
 grpcio==1.47.2
 grpcio-tools==1.47.2
+gunicorn==20.1.0
 huggingface-hub==0.12.0
 idna==3.4
 joblib==1.2.0
