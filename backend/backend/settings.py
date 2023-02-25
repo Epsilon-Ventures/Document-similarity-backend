@@ -27,9 +27,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-y$1uddu@$n=v$qi1mszkk&5n9xygn%@_@+p^w#y7i05$w@d$$9'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("PRODUCTION") != "True" or True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["document-similarity-backend-production.up.railway.app", "document-similarity-backend.onrender.com"]
 
 
 # Application definition
