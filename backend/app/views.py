@@ -1,48 +1,44 @@
 from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
-import requests
-import numpy as np
+from django.http import JsonResponse
 from rest_framework.decorators import api_view
 import json
 
-from pymilvus import connections, Collection, utility
+from pymilvus import connections, Collection
 from sentence_transformers import SentenceTransformer
 from .utils.helper_functions import similarity_score_calculator
+import os
 
 @api_view(["POST","GET"])
 def model_request(req):
-    model = SentenceTransformer("Nischal2015/models_sbert_v6")
+    model = SentenceTransformer("Nischal2015/sbert_eng_ques")
 
-    endpoint="https://in01-48ca8867d6ebb85.aws-us-west-2.vectordb.zillizcloud.com:19536"
+    endpoint="https://in01-a634cdb85f99794.aws-us-west-2.vectordb.zillizcloud.com:19542"
     connections.connect(
-    uri=endpoint,
-    secure=True,
-    user='kamao',
-    password='Random4545'
+        uri=endpoint,
+        secure=True,
+        user=os.environ.get('DB_NAME'),
+        password=os.environ.get('DB_PASSWORD')
     )
     collection = Collection("questions")
 
     if req.method == 'POST':
-
         query_question = req.body.decode('utf-8')  
-        # question = ['What is a handoff and what are some various handoff detection techniques?']
 
-        input_question = json.loads(query_question)
-        question = [input_question["question"]]
+        input_query = json.loads(query_question)
+        question = [input_query["question"]]
         embeddings = model.encode(question)
         search_params = {
-            "metric_type": "L2",
+            "metric_type": "IP",
             "params": {"level": 1},
         }
-        output_fields = ["question1"]
-
-
+        output_fields = ["question", "subject"]
 
         result = collection.search(
-        data = embeddings.tolist(),
-        anns_field="embeddings",
-        param=search_params,
-        limit=5,
+            data = embeddings.tolist(),
+            anns_field="embeddings",
+            param=search_params,
+            limit=5,
+            expr=None if input_query['subject'] == "" else f"subject == \"{input_query['subject'].lower()}\""
         )
 
         ids = result[0].ids
