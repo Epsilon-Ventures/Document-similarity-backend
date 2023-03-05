@@ -15,19 +15,20 @@ def dict_to_list(a_dict,key):
         return result_list
 
 
-def similarity_score_calculator(questions, model,query_encode):
+def similarity_score_calculator(response, model,query_encode):
         
-        encoded_question = model.encode(dict_to_list(questions,"question1"))
+        encoded_question = model.encode(dict_to_list(response,"question"))
 
         sim_scores = cos_sim(encoded_question,query_encode).tolist()
 
         ques_sim_score_list = []
 
-        for question,score in zip(questions,sim_scores):
+        for res,score in zip(response,sim_scores):
                 ques_sim_score_list.append({
-                        "question":question["question1"],
+                        "id":str(res["id"]),
+                        "question":res["question"],
                         "sim_score":round(score[0],2),
-                        "id":str(question["id"])
+                        "subject": res["subject"]
                 })
             
         return ques_sim_score_list

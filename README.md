@@ -1,50 +1,55 @@
-# backend-major
+# Backend Major Project
 
-# Db query installation script
+## Introduction
+
+This is our backend code for our major project.
+
+## Setup
+
+### Create a virtual environemnt
 
 ```bash
-pip install pymilvus sentence-transformers
+# For windows
+python -m venv env
+
+# For Linux
+python3 -m venv env
 ```
 
-### Question querying code snippet
+### Install dependencies
 
-```python
-from pymilvus import connections, Collection, utility
-from sentence_transformers import SentenceTransformer
+To run this code you must be in the root folder of the project.
 
-model = SentenceTransformer("Nischal2015/models_sbert_v6")
-
-endpoint="https://in01-48ca8867d6ebb85.aws-us-west-2.vectordb.zillizcloud.com:19536"
-connections.connect(
-    uri=endpoint,
-    secure=True,
-    user='kamao',
-    password='Random4545'
-)
-collection = Collection("questions")
-
-question = ['What is a handoff and what are some various handoff detection techniques?']
-
-embeddings = model.encode(question)
-search_params = {
-    "metric_type": "L2",
-    "params": {"level": 1},
-}
-output_fields = ["question1"]
-
-
-result = collection.search(
-  data = embeddings.tolist(),
-  anns_field="embeddings",
-  param=search_params,
-  limit=5,
-)
-
-ids = result[0].ids
-res = collection.query(
-  expr = f"id in {ids}",   # id in [1, 3, 4, 5]
-  output_fields=output_fields,
-  consistency_level="Strong"
-)
-print(res)
+```bash
+pip install -r requirements.txt
 ```
+
+## Running the server
+
+### Creating environment variables
+
+Create a file named `.env` in the root folder of the project and copy the contents listed below
+
+```
+DOMAIN_URL=https://document-similarity-frontend.vercel.app/
+DEBUG=True
+ALLOWED_HOSTS=localhost
+DJANGO_SECRET_KEY=django-insecure-y$1uddu@$n=v$qi1mszkk&5n9xygn%@_@+p^w#y7i05$w@d$$9
+DB_NAME=kamao
+DB_PASSWORD=Random4545
+```
+
+### Launching the server
+
+First make sure you are inside the `backend` folder. Then run the following command
+
+```bash
+# For development
+python manage.py runserver # Windows users
+python3 manage.py runserver # Linux users
+
+# For production
+gunicorn backend.wsgi
+```
+
+> When using `gunicorn` the changes won't take effect with hot reload.
