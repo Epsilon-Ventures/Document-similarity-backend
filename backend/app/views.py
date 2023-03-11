@@ -5,11 +5,19 @@ import json
 
 from pymilvus import connections, Collection
 from sentence_transformers import SentenceTransformer
-from .utils.helper_functions import similarity_score_calculator
+from .utils.helper_functions import prepare_response
 import os
 
 @api_view(["POST","GET"])
 def model_request(req):
+    """Sends reponse to the frontend
+
+    Args:
+        req (dict): Dictionary containing the question and subject
+
+    Returns:
+        json: Json response containing the id, question, subject and similarity score
+    """
     model = SentenceTransformer("Nischal2015/sbert_eng_ques")
 
     endpoint="https://in01-a634cdb85f99794.aws-us-west-2.vectordb.zillizcloud.com:19542"
@@ -43,11 +51,11 @@ def model_request(req):
 
         ids = result[0].ids
         res = collection.query(
-        expr = f"id in {ids}",   # id in [1, 3, 4, 5]
-        output_fields=output_fields,
-        consistency_level="Strong"
+            expr = f"id in {ids}",   # id in [1, 3, 4, 5]
+            output_fields=output_fields,
+            consistency_level="Strong"
         )
 
-        response_final = similarity_score_calculator(res,model,embeddings)
+        response_final = prepare_response(res,model,embeddings)
         return JsonResponse(response_final, safe = False)
 

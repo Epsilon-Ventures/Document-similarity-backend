@@ -1,12 +1,15 @@
 from sentence_transformers.util import cos_sim
 
+def dict_to_list(a_dict: dict, key: str) -> list:
+        """Converts a dictionary to a list
 
-a_dict = {
-        "question":"some question"
-}
+        Args:
+            a_dict (dict): Dictionary to be converted to list
+            key (string): Key field of the dictionary
 
-
-def dict_to_list(a_dict,key):
+        Returns:
+            list : List of values of the key field
+        """
         result_list = []
 
         for dict_value in a_dict:
@@ -15,11 +18,20 @@ def dict_to_list(a_dict,key):
         return result_list
 
 
-def similarity_score_calculator(response, model,query_encode):
-        
-        encoded_question = model.encode(dict_to_list(response,"question"))
+def prepare_response(response: dict, model: classmethod, query_encode: list) -> dict:
+        """Prepares the final response for the frontend
 
-        sim_scores = cos_sim(encoded_question,query_encode).tolist()
+        Args:
+            response (dict): Response from the database
+            model (class): Sentence transformer model
+            query_encode (list): Embeddings of entered question
+
+        Returns:
+            dict : Final response for the frontend
+        """
+        encoded_question = model.encode(dict_to_list(response, "question"))
+
+        sim_scores = cos_sim(encoded_question, query_encode).tolist()
 
         ques_sim_score_list = []
 
