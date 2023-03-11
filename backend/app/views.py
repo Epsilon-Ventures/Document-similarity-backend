@@ -8,6 +8,18 @@ from sentence_transformers import SentenceTransformer
 from .utils.helper_functions import prepare_response
 import os
 
+# IMPORTS FOR THE TEST VIEW FILE UPLOADS    
+from rest_framework import viewsets
+from rest_framework.response import Response
+from .serializers import FileSerializer
+from io import BytesIO
+
+
+@api_view(["GET"])
+def get_home(req):
+    return JsonResponse("Hello world",safe=False)
+
+
 @api_view(["POST","GET"])
 def model_request(req):
     """Sends reponse to the frontend
@@ -58,4 +70,36 @@ def model_request(req):
 
         response_final = prepare_response(res,model,embeddings)
         return JsonResponse(response_final, safe = False)
+
+
+
+#TEST VIEW FUNCTION FOR THE RETRIEVE OF FILE FROM THE BACKEND
+class FileViewSet(viewsets.ViewSet):
+    serializer_class = FileSerializer
+
+    def create(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            file_obj = serializer.validated_data['file']
+            # do something with the file object
+            print("file object - ",file_obj)
+
+            # THIS WAY OF READING RETRIEVED FILE FINALLY WORKED . It is InMemoryUploadFile , so it is read this way
+            file_content_ioByte = file_obj.read()
+            
+            # this is still in BytesIO format , to retrieve it in string format , we need to do this
+            file_text_bytes = BytesIO(file_content_ioByte)
+            
+            # file_text is byte object , to convert that into string, we need to call .decode() function
+            file_text_string = file_text_bytes.getvalue().decode()
+
+            # to convert the string into list
+            file_text_question_list = file_text_string.split("\n")
+            print(file_text_question_list)
+
+
+            return Response({'status': 'file uploaded'})
+        else:
+            return Response(serializer.errors, status=400)
+
 
