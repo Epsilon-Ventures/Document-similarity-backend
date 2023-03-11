@@ -1,23 +1,17 @@
-from django.shortcuts import render
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
 import json
 
-from pymilvus import connections, Collection
-from sentence_transformers import SentenceTransformer
+from pymilvus import Collection
+from .milvus import pool
+from .models import loaded_model as model
 from .utils.helper_functions import prepare_response
-import os
 
 # IMPORTS FOR THE TEST VIEW FILE UPLOADS    
 from rest_framework import viewsets
 from rest_framework.response import Response
 from .serializers import FileSerializer
 from io import BytesIO
-
-
-@api_view(["GET"])
-def get_home(req):
-    return JsonResponse("Hello world",safe=False)
 
 
 @api_view(["POST","GET"])
@@ -30,16 +24,9 @@ def model_request(req):
     Returns:
         json: Json response containing the id, question, subject and similarity score
     """
-    model = SentenceTransformer("Nischal2015/sbert_eng_ques")
-
-    endpoint="https://in01-a634cdb85f99794.aws-us-west-2.vectordb.zillizcloud.com:19542"
-    connections.connect(
-        uri=endpoint,
-        secure=True,
-        user=os.environ.get('DB_NAME'),
-        password=os.environ.get('DB_PASSWORD')
-    )
+    pool.connect()
     collection = Collection("questions")
+
 
     if req.method == 'POST':
         query_question = req.body.decode('utf-8')  
@@ -67,11 +54,38 @@ def model_request(req):
             output_fields=output_fields,
             consistency_level="Strong"
         )
-
         response_final = prepare_response(res,model,embeddings)
         return JsonResponse(response_final, safe = False)
+    
+@api_view(["POST"])
+def add_question(req):
+    """Adds question to the milvus database
 
+    Args:
+        req (dict): Dictionary containing the question and subject
 
+    Returns:
+        json: Json response containing the id, question, subject and similarity score
+    """
+    pool.connect()
+    collection = Collection("questions")
+
+    if req.method == 'POST':
+        query_question = req.body.decode('utf-8')  
+
+        input_query = json.loads(query_question)
+        question = [input_query["question"]]
+        embeddings = model.encode(question)
+        collection.insert(
+            [
+                {
+                    "question": input_query["question"],
+                    "subject": input_query["subject"].lower(),
+                    "embeddings": embeddings.tolist()
+                }
+            ]
+        )
+        return JsonResponse("Question added", safe = False)
 
 #TEST VIEW FUNCTION FOR THE RETRIEVE OF FILE FROM THE BACKEND
 class FileViewSet(viewsets.ViewSet):
