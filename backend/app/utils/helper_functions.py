@@ -44,3 +44,14 @@ def prepare_response(response: dict, model: classmethod, query_encode: list) -> 
                 })
             
         return ques_sim_score_list
+
+def search_query(result: list, collection, output_fields: list):
+    ids = result.ids
+
+    res = collection.query(
+        expr = f"id in {ids}",
+        output_fields=output_fields,
+        consistency_level="Strong"
+    )
+
+    return res;

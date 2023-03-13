@@ -5,7 +5,7 @@ import json
 from pymilvus import Collection
 from .milvus import pool
 from .models import loaded_model as model
-from .utils.helper_functions import prepare_response
+from .utils.helper_functions import prepare_response, search_query
 
 # IMPORTS FOR THE TEST VIEW FILE UPLOADS    
 from rest_framework import viewsets
@@ -48,12 +48,9 @@ def model_request(req):
             expr=None if input_query['subject'] == "" else f"subject == \"{input_query['subject'].lower()}\""
         )
 
-        ids = result[0].ids
-        res = collection.query(
-            expr = f"id in {ids}",   # id in [1, 3, 4, 5]
-            output_fields=output_fields,
-            consistency_level="Strong"
-        )
+        for item in result:
+            res = search_query(item, collection, output_fields)
+                    
         response_final = prepare_response(res,model,embeddings)
         return JsonResponse(response_final, safe = False)
     
@@ -96,7 +93,6 @@ class FileViewSet(viewsets.ViewSet):
         if serializer.is_valid():
             file_obj = serializer.validated_data['file']
             # do something with the file object
-            print("file object - ",file_obj)
 
             # THIS WAY OF READING RETRIEVED FILE FINALLY WORKED . It is InMemoryUploadFile , so it is read this way
             file_content_ioByte = file_obj.read()
@@ -109,10 +105,33 @@ class FileViewSet(viewsets.ViewSet):
 
             # to convert the string into list
             file_text_question_list = file_text_string.split("\n")
-            print(file_text_question_list)
 
+            # convert to embeddings
+            embeddings = model.encode(file_text_question_list)
 
-            return Response({'status': 'file uploaded'})
+            pool.connect()
+            collection = Collection("questions")
+
+            search_params = {
+                "metric_type": "IP",
+                "params": {"level": 1},
+            }
+            output_fields = ["question", "subject"]
+
+            result = collection.search(
+                data = embeddings.tolist(),
+                anns_field="embeddings",
+                param=search_params,
+                limit=5,
+            )
+
+            list_of_responses = []
+            for item in result:
+                res = search_query(item, collection, output_fields)
+                response = prepare_response(res,model,embeddings)
+                list_of_responses.append(response)
+
+            return JsonResponse(list_of_responses, safe = False)
         else:
             return Response(serializer.errors, status=400)
 
