@@ -9,10 +9,10 @@ from .views import FileViewSet
 router = routers.DefaultRouter()
 
 # so the api endpoint myfile/file/ is going to handle the file upload
-router.register(r'file', FileViewSet, basename='file')
+router.register(r'file-upload', FileViewSet, basename='file-upload')
 
 # END OF LINE FOR  URL PATTERN FOR THE FILE UPLOAD TEST
 urlpatterns = [
     path("api/database-connection/",views.model_request,name="database-connection"),
-    path('myfile/', include(router.urls)),
+    path('api/', include(router.urls)),
 ]

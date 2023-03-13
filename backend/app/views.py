@@ -16,7 +16,7 @@ from io import BytesIO
 
 @api_view(["POST","GET"])
 def model_request(req):
-    """Sends reponse to the frontend
+    """Sends response to the frontend
 
     Args:
         req (dict): Dictionary containing the question and subject
