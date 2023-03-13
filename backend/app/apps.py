@@ -6,5 +6,5 @@ class AppConfig(AppConfig):
     name = 'app'
 
     def ready(self):
-        # Call the load_model function when the app is ready
+        """Loads the model when the app is ready"""
         load_model()
