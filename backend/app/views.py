@@ -38,7 +38,7 @@ def model_request(req):
             "metric_type": "IP",
             "params": {"level": 1},
         }
-        output_fields = ["question", "subject"]
+        output_fields = ["question", "subject", "year", "sem"]
 
         result = collection.search(
             data = embeddings.tolist(),
@@ -87,6 +87,7 @@ def add_question(req):
 #TEST VIEW FUNCTION FOR THE RETRIEVE OF FILE FROM THE BACKEND
 class FileViewSet(viewsets.ViewSet):
     serializer_class = FileSerializer
+    ques_list = []
 
     def create(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -105,6 +106,11 @@ class FileViewSet(viewsets.ViewSet):
 
             # to convert the string into list
             file_text_question_list = file_text_string.split("\n")
+            file_text_question_list = [item for item in file_text_question_list if item != ""]
+
+            print(file_text_question_list)
+
+            FileViewSet.ques_list = file_text_question_list
 
             # convert to embeddings
             embeddings = model.encode(file_text_question_list)
@@ -116,7 +122,7 @@ class FileViewSet(viewsets.ViewSet):
                 "metric_type": "IP",
                 "params": {"level": 1},
             }
-            output_fields = ["question", "subject"]
+            output_fields = ["question", "subject", "year", "sem"]
 
             result = collection.search(
                 data = embeddings.tolist(),
@@ -134,5 +140,9 @@ class FileViewSet(viewsets.ViewSet):
             return JsonResponse(list_of_responses, safe = False)
         else:
             return Response(serializer.errors, status=400)
+        
+    def get(self, request):
+        print(FileViewSet.ques_list)
+        return JsonResponse(FileViewSet.ques_list, safe = False)
 
 
