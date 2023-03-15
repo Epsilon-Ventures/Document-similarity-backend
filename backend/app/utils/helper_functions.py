@@ -40,7 +40,9 @@ def prepare_response(response: dict, model: classmethod, query_encode: list) -> 
                         "id":str(res["id"]),
                         "question":res["question"],
                         "sim_score":round(score[0],2),
-                        "subject": res["subject"]
+                        "subject": res["subject"],
+                        "year": res["year"],
+                        "sem": res["sem"]
                 })
             
         return ques_sim_score_list
