@@ -4,7 +4,7 @@ from . import views
 
 # URL PATTERN FOR THE FILE UPLOAD TEST
 from rest_framework import routers
-from .views import FileViewSet, TwoFileViewSet
+from .views import FileViewSet, TwoFileViewSet, add_question
 
 router = routers.DefaultRouter()
 
@@ -16,6 +16,7 @@ router.register(r'two-file-upload',TwoFileViewSet,basename="two-file-upload")
 urlpatterns = [
     path("api/database-connection/",views.model_request,name="database-connection"),
     path('api/', include(router.urls)),
+    path("api/add-question/", add_question,name = "add-question" )
 ]
 
 

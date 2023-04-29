@@ -6,7 +6,7 @@ import numpy as np
 
 from sentence_transformers.util import cos_sim
 
-from pymilvus import Collection
+from pymilvus import Collection, DataType
 from .milvus import pool
 from .models import loaded_model as model
 from .utils.helper_functions import prepare_response, search_query
@@ -75,18 +75,42 @@ def add_question(req):
         query_question = req.body.decode('utf-8')  
 
         input_query = json.loads(query_question)
-        question = [input_query["question"]]
-        embeddings = model.encode(question)
-        collection.insert(
-            [
-                {
-                    "question": input_query["question"],
-                    "subject": input_query["subject"].lower(),
-                    "embeddings": embeddings.tolist()
-                }
-            ]
+        question = input_query["question"]
+        subject = input_query["subject"]
+        year = input_query["year"]
+
+        sem = input_query["sem"]
+
+        print("Question - ",question)
+        print("Question - ",subject)
+        print("Question - ",year)
+        print("Question - ",sem)
+
+        
+
+        embeddings = model.encode([question])
+        collection.insert([
+
+             [
+                
+                    {"name":"embeddings","values": embeddings.tolist(), "type": DataType.FLOAT_VECTOR},
+                    {"name":"subject","values": subject, "type":DataType.VARCHAR},
+                    {"name":"question","values": question, "type":DataType.VARCHAR},
+                    {"name":"sem","values":sem, "type":DataType.VARCHAR},
+                    {"name":"year","values":year, "type":DataType.VARCHAR},
+            ]]
+           
+            #  [
+                
+            #         [embeddings.tolist()],
+            #         [subject],
+            #         [question],
+            #         [sem],
+            #         [year],
+            # ]
+
         )
-        return JsonResponse("Question added", safe = False)
+        return JsonResponse([question,subject,sem,year], safe = False)
 
 #TEST VIEW FUNCTION FOR THE RETRIEVE OF FILE FROM THE BACKEND
 class FileViewSet(viewsets.ViewSet):
