@@ -78,38 +78,16 @@ def add_question(req):
         question = input_query["question"]
         subject = input_query["subject"]
         year = input_query["year"]
-
-        sem = input_query["sem"]
-
-        print("Question - ",question)
-        print("Question - ",subject)
-        print("Question - ",year)
-        print("Question - ",sem)
-
-        
-
+        sem = input_query["sem"]        
         embeddings = model.encode([question])
+
         collection.insert([
-
-             [
-                
-                    {"name":"embeddings","values": embeddings.tolist(), "type": DataType.FLOAT_VECTOR},
-                    {"name":"subject","values": subject, "type":DataType.VARCHAR},
-                    {"name":"question","values": question, "type":DataType.VARCHAR},
-                    {"name":"sem","values":sem, "type":DataType.VARCHAR},
-                    {"name":"year","values":year, "type":DataType.VARCHAR},
-            ]]
-           
-            #  [
-                
-            #         [embeddings.tolist()],
-            #         [subject],
-            #         [question],
-            #         [sem],
-            #         [year],
-            # ]
-
-        )
+            embeddings,
+            [subject],
+            [year],
+            [sem],
+            [question],
+        ])
         return JsonResponse([question,subject,sem,year], safe = False)
 
 #TEST VIEW FUNCTION FOR THE RETRIEVE OF FILE FROM THE BACKEND
