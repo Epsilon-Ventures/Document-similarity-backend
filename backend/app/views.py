@@ -3,18 +3,20 @@ from rest_framework.decorators import api_view
 import json
 
 import numpy as np
+from datetime import date
 
 from sentence_transformers.util import cos_sim
 
-from pymilvus import Collection, DataType
+from pymilvus import Collection
 from .milvus import pool
 from .models import loaded_model as model
 from .utils.helper_functions import prepare_response, search_query
+from .utils.file_upload import file_upload_embeddings
 
 # IMPORTS FOR THE TEST VIEW FILE UPLOADS    
 from rest_framework import viewsets
 from rest_framework.response import Response
-from .serializers import TwoFileSerializer, FileSerializer
+from .serializers import TwoFileSerializer, FileSerializer, TopTwoQuestionSerializer
 from io import BytesIO
 
 
@@ -79,6 +81,8 @@ def add_question(req):
         subject = input_query["subject"]
         year = input_query["year"]
         sem = input_query["sem"]        
+        paper_id = input_query["paper_id"]        
+        mark = input_query["mark"]        
         embeddings = model.encode([question])
 
         collection.insert([
@@ -87,6 +91,8 @@ def add_question(req):
             [year],
             [sem],
             [question],
+            [paper_id],
+            [mark]
         ])
         return JsonResponse([question,subject,sem,year], safe = False)
 
@@ -99,27 +105,8 @@ class FileViewSet(viewsets.ViewSet):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             file_obj = serializer.validated_data['file']
-            # do something with the file object
 
-            # THIS WAY OF READING RETRIEVED FILE FINALLY WORKED . It is InMemoryUploadFile , so it is read this way
-            file_content_ioByte = file_obj.read()
-            
-            # this is still in BytesIO format , to retrieve it in string format , we need to do this
-            file_text_bytes = BytesIO(file_content_ioByte)
-            
-            # file_text is byte object , to convert that into string, we need to call .decode() function
-            file_text_string = file_text_bytes.getvalue().decode()
-
-            # to convert the string into list
-            file_text_question_list = file_text_string.split("\n")
-            file_text_question_list = [item for item in file_text_question_list if item != ""]
-
-            print(file_text_question_list)
-
-            FileViewSet.ques_list = file_text_question_list
-
-            # convert to embeddings
-            embeddings = model.encode(file_text_question_list)
+            embeddings = file_upload_embeddings(FileViewSet, file_obj)
 
             pool.connect()
             collection = Collection("questions")
@@ -136,7 +123,6 @@ class FileViewSet(viewsets.ViewSet):
                 param=search_params,
                 limit=5,
             )
-
             list_of_responses = []
             for item in result:
                 res = search_query(item, collection, output_fields)
@@ -148,7 +134,6 @@ class FileViewSet(viewsets.ViewSet):
             return Response(serializer.errors, status=400)
         
     def get(self, request):
-        print(FileViewSet.ques_list)
         return JsonResponse(FileViewSet.ques_list, safe = False)
 
 
@@ -166,11 +151,6 @@ class TwoFileViewSet(viewsets.ViewSet):
         if serializer.is_valid():
             file_obj1 = serializer.validated_data['file1']
             file_obj2 = serializer.validated_data['file2']
-
-            # print("file_obj1 - ",file_obj1)
-
-            
-            # do something with the file object
 
             # THIS WAY OF READING RETRIEVED FILE FINALLY WORKED . It is InMemoryUploadFile , so it is read this way
             file_content_ioByte1 = file_obj1.read()
@@ -196,12 +176,6 @@ class TwoFileViewSet(viewsets.ViewSet):
             TwoFileViewSet.ques_list1 = file_text_question_list1
             TwoFileViewSet.ques_list2 = file_text_question_list2
 
-            # print("file 1 questions - ",file_text_question_list1)
-            # print("file 2 questions - ",file_text_question_list2)
-
-            
-            
-            
             # convert to embeddings
             embeddings1 = model.encode(file_text_question_list1)
             embeddings2 = model.encode(file_text_question_list2)
@@ -210,36 +184,51 @@ class TwoFileViewSet(viewsets.ViewSet):
             emb1_mean = np.mean(embeddings1,axis=0) 
             emb2_mean = np.mean(embeddings2,axis=0)
 
-
-
             print(cos_sim(emb1_mean,emb2_mean))
-            # pool.connect()
-            # collection = Collection("questions")
             return JsonResponse("hello , you reached here",safe=False)
 
-    #         search_params = {
-    #             "metric_type": "IP",
-    #             "params": {"level": 1},
-    #         }
-    #         output_fields = ["question", "subject", "year", "sem"]
+class TopTwoQuestion(viewsets.ViewSet):
+    serializer_class = TopTwoQuestionSerializer
+    ques_list = []
+    def create(self, request):
+        subject = request.data['subject']
 
-    #         result = collection.search(
-    #             data = embeddings.tolist(),
-    #             anns_field="embeddings",
-    #             param=search_params,
-    #             limit=5,
-    #         )
-
-    #         list_of_responses = []
-    #         for item in result:
-    #             res = search_query(item, collection, output_fields)
-    #             response = prepare_response(res,model,embeddings)
-    #             list_of_responses.append(response)
-
-    #         return JsonResponse(list_of_responses, safe = False)
-    #     else:
-    #         return Response(serializer.errors, status=400)
+        serializer = self.serializer_class(data=request.data)
         
-    # def get(self, request):
-    #     print(FileViewSet.ques_list)
-    #     return JsonResponse(FileViewSet.ques_list, safe = False)
+        if serializer.is_valid():
+            file_obj = serializer.validated_data['file']
+        
+            embeddings = file_upload_embeddings(TopTwoQuestion, file_obj)
+
+            pool.connect()
+            collection = Collection("questions")
+
+            search_params = {
+                "metric_type": "IP",
+                "params": {"level": 1},
+            }
+            output_fields = ["question", "subject", "year", "sem"]
+
+            # current_year = date.today().year
+            # current = str(current_year)
+            # past = str(current_year - 1)
+            current = 2013
+            past= 2012
+
+            result = collection.search(
+                data = embeddings.tolist(),
+                anns_field="embeddings",
+                param=search_params,
+                limit=2,
+                expr = f"subject == \"{subject.lower()}\" && year in [\"{current}\", \"{past}\"]"
+            )
+
+            list_of_responses = []
+            for item in result:
+                res = search_query(item, collection, output_fields)
+                response = prepare_response(res,model,embeddings)
+                list_of_responses.append(response)
+
+            return JsonResponse(list_of_responses, safe = False)
+        # return JsonResponse("hello", safe=False)
+

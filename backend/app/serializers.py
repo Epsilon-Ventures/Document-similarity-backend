@@ -6,3 +6,7 @@ class FileSerializer(serializers.Serializer):
 class TwoFileSerializer(serializers.Serializer):
     file1 = serializers.FileField()
     file2 = serializers.FileField()
+
+class TopTwoQuestionSerializer(serializers.Serializer):
+    file = serializers.FileField()
+    subject = serializers.StringRelatedField()
