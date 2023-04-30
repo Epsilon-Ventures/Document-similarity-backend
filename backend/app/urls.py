@@ -4,13 +4,14 @@ from . import views
 
 # URL PATTERN FOR THE FILE UPLOAD TEST
 from rest_framework import routers
-from .views import FileViewSet, TwoFileViewSet, add_question
+from .views import FileViewSet, TwoFileViewSet, TopTwoQuestion, add_question
 
 router = routers.DefaultRouter()
 
 # so the api endpoint myfile/file/ is going to handle the file upload
 router.register(r'file-upload', FileViewSet, basename='file-upload')
 router.register(r'two-file-upload',TwoFileViewSet,basename="two-file-upload")
+router.register(r'top-two-file',TopTwoQuestion,basename="top-two-file")
 
 # END OF LINE FOR  URL PATTERN FOR THE FILE UPLOAD TEST
 urlpatterns = [
