@@ -183,9 +183,14 @@ class TwoFileViewSet(viewsets.ViewSet):
             # calculating mean 
             emb1_mean = np.mean(embeddings1,axis=0) 
             emb2_mean = np.mean(embeddings2,axis=0)
+            two_file_similarity = cos_sim(emb1_mean,emb2_mean)
 
-            print(cos_sim(emb1_mean,emb2_mean))
-            return JsonResponse("hello , you reached here",safe=False)
+            return JsonResponse(two_file_similarity.tolist(),safe=False)
+
+        
+    def get(self, request):
+        print(TwoFileViewSet.ques_list1)
+        return JsonResponse({"file1":TwoFileViewSet.ques_list1,"file2":TwoFileViewSet.ques_list2}, safe = False)
 
 class TopTwoQuestion(viewsets.ViewSet):
     serializer_class = TopTwoQuestionSerializer
@@ -232,3 +237,4 @@ class TopTwoQuestion(viewsets.ViewSet):
             return JsonResponse(list_of_responses, safe = False)
         # return JsonResponse("hello", safe=False)
 
+        
