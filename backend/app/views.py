@@ -71,31 +71,35 @@ def add_question(req):
         json: Json response containing the id, question, subject and similarity score
     """
     pool.connect()
-    collection = Collection("questions")
+    collection = Collection("dummy_questions")
 
     if req.method == 'POST':
         query_question = req.body.decode('utf-8')  
 
         input_query = json.loads(query_question)
-        question = input_query["question"]
         subject = input_query["subject"]
         year = input_query["year"]
-        sem = input_query["sem"]        
-        paper_id = input_query["paper_id"]        
-        mark = input_query["mark"]        
-        embeddings = model.encode([question])
+        sem = input_query["sem"]  
+        payload = input_query["payload"]   
+        
+        questions = [value['question'] for value in payload]
+        marks = [value['mark'] for value in payload]
+        subjects = [subject for _ in range(len(questions))]
+        years = [year for _ in range(len(questions))]
+        sems = [sem for _ in range(len(questions))]
+        embeddings = model.encode(questions)
+        paper_ids = ["0" for _ in range(len(questions))]
 
         collection.insert([
             embeddings,
-            [subject],
-            [year],
-            [sem],
-            [question],
-            [paper_id],
-            [mark]
+            subjects,
+            years,
+            sems,
+            questions,
+            paper_ids,
+            marks
         ])
-        return JsonResponse([question,subject,sem,year], safe = False)
-
+        return JsonResponse([questions,subjects,sems,years], safe = False)
 #TEST VIEW FUNCTION FOR THE RETRIEVE OF FILE FROM THE BACKEND
 class FileViewSet(viewsets.ViewSet):
     serializer_class = FileSerializer
@@ -135,8 +139,6 @@ class FileViewSet(viewsets.ViewSet):
         
     def get(self, request):
         return JsonResponse(FileViewSet.ques_list, safe = False)
-
-
 
 class TwoFileViewSet(viewsets.ViewSet):
     serializer_class = TwoFileSerializer
@@ -235,6 +237,3 @@ class TopTwoQuestion(viewsets.ViewSet):
                 list_of_responses.append(response)
 
             return JsonResponse(list_of_responses, safe = False)
-        # return JsonResponse("hello", safe=False)
-
-        
