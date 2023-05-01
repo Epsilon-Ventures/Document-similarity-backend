@@ -186,18 +186,18 @@ class TwoFileViewSet(viewsets.ViewSet):
 
             # calculating similarity for each question in paper 1 to every other question in paper 2
             sim_paper1 = []
-            for i in embeddings1:
+            for index, i in enumerate(embeddings1):
                 most_similar = 0
                 similarity = 0
-                n = 0
-                for j in embeddings2:
+                for n, j in enumerate(embeddings2):
                     temp = cos_sim(i, j)
                     if temp > similarity:
                         most_similar = n
                         similarity = temp
-                    n = n + 1
+
                 sim_paper1.append({
-                    "question": file_text_question_list2[most_similar], 
+                    "question": file_text_question_list1[index],
+                    "similar_question": file_text_question_list2[most_similar], 
                     "similarity": round(float(similarity),4)})
 
             return JsonResponse({
@@ -252,3 +252,6 @@ class TopTwoQuestion(viewsets.ViewSet):
                 list_of_responses.append(response)
 
             return JsonResponse(list_of_responses, safe = False)
+
+    def get(self, request):
+        return JsonResponse(TopTwoQuestion.ques_list, safe = False)
