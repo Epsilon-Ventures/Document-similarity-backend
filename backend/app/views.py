@@ -145,9 +145,6 @@ class TwoFileViewSet(viewsets.ViewSet):
     ques_list1 = []
     ques_list2 = []
 
-    def get(self,req):
-        return JsonResponse("you reached this route",safe=False)
-
     def create(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
@@ -187,11 +184,29 @@ class TwoFileViewSet(viewsets.ViewSet):
             emb2_mean = np.mean(embeddings2,axis=0)
             two_file_similarity = cos_sim(emb1_mean,emb2_mean)
 
-            return JsonResponse(two_file_similarity.tolist(),safe=False)
+            # calculating similarity for each question in paper 1 to every other question in paper 2
+            sim_paper1 = []
+            for i in embeddings1:
+                most_similar = 0
+                similarity = 0
+                n = 0
+                for j in embeddings2:
+                    temp = cos_sim(i, j)
+                    if temp > similarity:
+                        most_similar = n
+                        similarity = temp
+                    n = n + 1
+                sim_paper1.append({
+                    "question": file_text_question_list2[most_similar], 
+                    "similarity": round(float(similarity),4)})
+
+            return JsonResponse({
+                "overall_sim" : round(float(two_file_similarity),4),
+                "paper1_sim": sim_paper1
+                },safe=False)
 
         
     def get(self, request):
-        print(TwoFileViewSet.ques_list1)
         return JsonResponse({"file1":TwoFileViewSet.ques_list1,"file2":TwoFileViewSet.ques_list2}, safe = False)
 
 class TopTwoQuestion(viewsets.ViewSet):
