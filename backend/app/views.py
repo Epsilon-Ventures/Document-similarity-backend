@@ -10,7 +10,7 @@ from sentence_transformers.util import cos_sim
 from pymilvus import Collection
 from .milvus import pool
 from .models import loaded_model as model
-from .utils.helper_functions import prepare_response, search_query
+from .utils.helper_functions import prepare_response, prepare_response2, search_query
 from .utils.file_upload import file_upload_embeddings
 
 # IMPORTS FOR THE TEST VIEW FILE UPLOADS    
@@ -246,9 +246,9 @@ class TopTwoQuestion(viewsets.ViewSet):
             )
 
             list_of_responses = []
-            for item in result:
+            for i, item in enumerate(result):
                 res = search_query(item, collection, output_fields)
-                response = prepare_response(res,model,embeddings)
+                response = prepare_response2(res,model,embeddings, i)
                 list_of_responses.append(response)
 
             return JsonResponse(list_of_responses, safe = False)
